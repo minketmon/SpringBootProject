@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 
+/**
+ * @packageName		: src/main/resources/mapper
+ * @fileName		: BoardDAO
+ * @author			: 고정민
+ * @description		: 게시판과 관련된 쿼리문을 처리
+ * 					 [입력, 전체 조회, 페이지별 조회, 상세 조회, 삭제, 수정, 조회수 카운트, 총 개수 조회]
+**/
+ -->
+<mapper namespace="com.hyundai.project.dao.BoardDAO">
+
+	<insert id="insertBoard" parameterType="BoardDTO">
+		insert into Board(no,
+		name, title, content, password, image)
+		values(s_Board.nextval, #{name},
+		#{title}, #{content}, #{password}, #{image})
+	</insert>
+
+	<select id="getBoardList" resultType="BoardDTO">
+		SELECT no
+		,title,name,regdate,readcount, image
+		FROM Board
+		ORDER BY no DESC
+	</select>
+	
+	<select id="getBoardListWithPaging" resultType="BoardDTO">
+		SELECT *
+			FROM (select rownum as rn, b.no, b.name, b.title, b.content, b.regdate, b.readcount, b.password, b.image
+			from ( select * from board order by regdate desc ) b)
+			WHERE rn between (#{pageNum} - 1) * #{amount} + 1 and #{pageNum} * #{amount}
+	</select>
+
+	<select id="getDetail" parameterType="long"
+		resultType="BoardDTO">
+		SELECT no,title,name,regdate,readcount,content, image
+		FROM Board
+		WHERE no=#{no}
+	</select>
+
+	<delete id="deleteBoard" parameterType="BoardDTO">
+		DELETE Board
+		WHERE no=#{no}
+		AND password=#{password}
+	</delete>
+
+	<update id="updateBoard" parameterType="BoardDTO">
+		update board set
+		name =#{name}
+		,title =#{title}
+		,content=#{content}
+		where no=#{no} and password=#{password}
+	</update>
+	
+	<update id="countBoard" parameterType="long">
+		update board set readcount = readcount+1 where no = #{no}
+	</update>
+	
+	<select id="getTotalCount" resultType="int">
+		select count(*) from board where no > 0
+	</select>
+</mapper>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<!-- 
+/**
+ * @fileName		: delete.html
+ * @author			: 고정민
+ * @description		: 게시글 삭제 페이지
+**/
+ -->
+<head>
+	<meta charset="UTF-8">
+	<title>게시물</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+		integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300&display=swap" rel="stylesheet">
+</head>
+<style>
+	body {
+		font-family: 'Noto Serif KR', serif;
+	}
+</style>
+
+<body>
+	<script src="http://code.jquery.com/jquery-2.2.3.min.js"> </script>
+	<div style="text-align:center; width:600px; margin-left:450px; margin-top:50px">
+		<form method="post">
+			<h5 style="text-align:center; margin-bottom:20px">게시물 삭제</h5>
+			<table class="table" style->
+				<tr>
+					<th>번호</th>
+					<td>[[${no}]]<input type="hidden" name="no" th:value="${no}" /></td>
+				</tr>
+				<tr>
+					<th>비밀번호</th>
+					<td><input type="password" name="password" required="required" autofocus="autofocus" /><br /> * 처음 글
+						입력시 비밀번호를 재입력하세요.</td>
+				</tr>
+				<tr>
+					<td colspan="2" align="center"><input type="submit" value="완료" class="btn btn-outline-dark" /></td>
+				</tr>
+			</table>
+		</form>
+	</div>
+</body>
+
+</html>

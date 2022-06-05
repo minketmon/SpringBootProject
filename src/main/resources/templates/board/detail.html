@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th=http://www.thymeleaf.org xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<!-- 
+/**
+ * @fileName		: detail.html
+ * @author			: 고정민
+ * @description		: 게시글 상세 페이지 (ajax로 댓글 로드)
+**/
+ -->
+ <head>
+	<meta charset="UTF-8">
+	<title>Insert title here</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+		integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300&display=swap" rel="stylesheet">
+	<style>
+		#modDiv {
+			width: 300px;
+			height: 150px;
+			background-color: gray;
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			margin-top: -50px;
+			margin-left: -150px;
+			padding: 10px;
+			z-index: 1000;
+			text-align:left;
+		}
+
+		.pagination {
+			width: 100%;
+		}
+
+		.pagination li {
+			list-style: none;
+			float: left;
+			padding: 3px;
+			border: 1px solid blue;
+			margin: 3px;
+		}
+
+		.pagination li a {
+			margin: 3px;
+			text-decoration: none;
+		}
+		body {
+		font-family: 'Noto Serif KR', serif;
+	}
+	</style>
+</head>
+<body>
+	<a sec:authorize="hasRole('ROLE_USER')">
+		<input type="hidden" th:value="${#authentication.principal.name}" id="loginId" />
+	</a>
+	<div style="text-align:center; width:600px; margin-left:450px; margin-top:50px">
+		<script src="http://code.jquery.com/jquery-2.2.3.min.js"> </script>
+		<h5 style="text-align:center; margin-bottom:20px">게시물 상세보기</h5>
+		<table class="table">
+			<tr>
+				<th>글번호</th>
+				<td id="bno" th:text="${boardDTO.no}" />
+			</tr>
+			<tr>
+				<th>제목</th>
+				<td th:text="${boardDTO.title}" />
+			</tr>
+			<tr>
+				<th>이름</th>
+				<td th:text="${boardDTO.name}" />
+			</tr>
+			<tr>
+				<th>내용</th>
+				<td th:text="${boardDTO.content}" />
+			</tr>
+			<input type="hidden" th:value="${boardDTO.image}" id="imageid" />
+			<tr id="imagediv">
+			</tr>
+			<tr>
+				<th>작성일</th>
+				<td th:text="${#calendars.format(boardDTO.regdate, 'yyyy-MM-dd HH:mm:ss')}" />
+			</tr>
+			<tr>
+				<th>조회수</th>
+				<td th:text="${boardDTO.readcount}" />
+			</tr>
+		</table>
+		<br />
+		<div style="float:right">
+			<a sec:authorize="hasRole('ROLE_USER')">
+				<a th:if="${boardDTO.name == #authentication.principal.name}">
+					<!--<button th:onclick="location.href='@{update(no=${boardDTO.no})}'" th:text="수정" />-->
+					<button class="btn btn-outline-dark" th:onclick="'location.href=\''+ @{update(no=${boardDTO.no})}+'\''"
+						th:text="수정" />
+					<button class="btn btn-outline-dark" th:onclick="'location.href=\''+ @{delete(no=${boardDTO.no})}+'\''"
+						th:text="삭제" />
+				</a>
+			</a>
+			<button class="btn btn-outline-info" th:onclick="'location.href=\''+ @{list}+'\''" th:text="리스트" />
+		</div>
+		<br><br>
+		<!-- 모달 부분 시작 -->
+		<div id='modDiv' style="display: none;">
+			<div class='modal-title'></div>
+			<div class='modal-rno' style="display:none"></div>
+			<div>
+				<input type='text' id='replytext'>
+			</div>
+			<div style="margin-top:10px">
+				<button type="button" id="replyModBtn" class="btn btn-light">Modify</button>
+				<button type="button" id="replyDelBtn" class="btn btn-light">DELETE</button>
+				<button type="button" id="closeBtn" class="btn btn-light">Close</button>
+			</div>
+		</div>
+		<div style="text-align:left">
+		<!-- 모달 부분 시작 끝-->
+		<a sec:authorize="hasRole('ROLE_USER')">
+			<div class="input-group mb-3">
+				<div class="input-group-prepend">
+					<span class="input-group-text" id="inputGroup-sizing-default">작성자</span>
+				</div>
+				<input type="text" name="replyer" id="newReplyWriter" class="form-control"
+				 	th:value="${#authentication.principal.name}" readonly/>
+			</div>
+			<div class="input-group mb-3">
+				<input type="text" name='replytext' id='newReplyText' class="form-control" aria-describedby="button-addon2">
+				<div class="input-group-append">
+					<button id="replyAddBtn" class="btn btn-outline-secondary" type="button">ADD REPLY</button>
+				</div>
+			</div>
+		</a>
+		<br><br>
+
+			<!-- 댓글이 추가되는 부분 -->
+			<div id="replies">
+			</div>
+		</div>
+	</div>
+	<script>
+		var bno = $("#bno").text();
+		getAllList();  //페이지 시작시 함수 호출
+		var imageval = $("#imageid").val();
+		console.log(imageval);
+		// 이미지가 없으면 아예 띄우지 않음
+		if (imageval != "none" && imageval != "") {
+			var str = "<th>첨부파일</th><td><img src='display?fileName=" + imageval + "'style='width:300px'></td>";
+			$("#imagediv").html(str);
+		}
+		// 조회수 카운트
+		$.ajax({
+				type: 'post',
+				url: '/count?no=' + bno,
+				dataType: 'text',
+				success: function (result) {
+					console.log(result);
+					
+				}
+			});
+		// 댓글 조회 ajax
+		function getAllList() {
+			var id = $("#loginId").val();
+			$.getJSON("/replies/all/" + bno,
+				function (data) {
+					var str = "<h5>[댓글]</h5>";
+					$(data).each(
+						function () {
+							str += "<li style='list-style:none; margin-top:10px;' data-rno='" + this.rno + "' data-replyer='" + this.replyer + "' class='replyLi'>"
+								+ this.replyer + " : "
+								+ this.replytext
+								+ "<input style='float:right;height:30px;" + ((this.replyer == id) ? "display:block;" : "display:none;") + "' type='button' value='✖' class='btn btn-outline-success'/></li>";
+
+						});
+					$("#replies").html(str);
+				});
+			$("#newReplyWriter").val();
+			$("#newReplyText").val('');
+
+		}
+
+		//댓글 작성 ajax
+		$("#replyAddBtn").on("click", function () {
+			var replyer = $("#newReplyWriter").val();
+			var replytext = $("#newReplyText").val();
+			$.ajax({
+				type: 'post',
+				url: '/replies',
+				headers: {
+					"Content-Type": "application/json",
+					"X-HTTP-Method-Override": "POST"
+				},
+				dataType: 'text',
+				data: JSON.stringify({
+					bno: bno,
+					replyer: replyer,
+					replytext: replytext
+				}),
+				success: function (result) {
+					console.log(result);
+					if (result == 'SUCCESS') {
+						alert("등록 되었습니다.");
+						getAllList();
+					}//end if
+				}//end sucess..
+			});//end ajax
+		});//$("#replyAddBtn").on("click"
+
+		// 모달 창 띄우기
+		$("#replies").on("click", ".replyLi input", function () {
+			var reply = $(this).parent();
+			var rno = reply.attr("data-rno");
+			var rwriter = reply.attr("data-replyer");
+			var replytext = reply.text();
+			var arr = replytext.split(": ");
+			console.log("click");
+			$(".modal-title").html(rwriter);
+			$(".modal-rno").html(rno);
+			$("#replytext").val(arr[1]);
+			$("#modDiv").show("slow");
+		});
+
+		// 댓글 삭제
+		$("#replyDelBtn").on("click", function () {
+			var rno = $(".modal-rno").html();
+			var replytext = $("#replytext").val();
+			$.ajax({
+				type: 'delete',
+				url: '/replies/' + rno,
+				headers: {
+					"Content-Type": "application/json",
+					"X-HTTP-Method-Override": "DELETE"
+				},
+				dataType: 'text',
+				success: function (result) {
+					console.log("result: " + result);
+					if (result == 'SUCCESS') {
+						alert("삭제 되었습니다.");
+						$("#modDiv").hide("slow");
+						getAllList();
+					}//end if
+				}//end sucess..
+			});//end ajax
+		});//end $("#replyDelBtn").on("click
+
+		// 댓글 수정
+		$("#replyModBtn").on("click", function () {
+			var rno = $(".modal-rno").html();
+			var replytext = $("#replytext").val();
+			$.ajax({
+				type: 'put',
+				url: '/replies/' + rno,
+				headers: {
+					"Content-Type": "application/json",
+					"X-HTTP-Method-Override": "PUT"
+				},
+				data: JSON.stringify({replytext: replytext}),
+				dataType: 'text',
+				success: function (result) {
+					console.log("result: " + result);
+					if (result == 'SUCCESS') {
+						alert("수정 되었습니다.");
+						$("#modDiv").hide("slow");
+						getAllList();
+					}//ebd if
+				}
+			}); //end ajax
+		}); //end $("#replyModBtn").on("click"
+
+		// 모달 닫기
+		$("#closeBtn").on("click", function () {
+			$("#modDiv").hide("slow");
+		});   //$("#closeBtn").on("click"      
+
+	</script>
+</body>
+
+</html>

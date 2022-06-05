@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th=http://www.thymeleaf.org xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<!-- 
+/**
+ * @fileName		: list.html
+ * @author			: 고정민
+ * @description		: 게시글 페이지 별 조회 화면
+**/
+ -->
+<head>
+	<meta charset="UTF-8">
+	<title>게시물</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+		integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300&display=swap" rel="stylesheet">
+</head>
+<style>
+@import url('https://fonts.googleapis.com/css?family=Noto+Sans+KR|ZCOOL+QingKe+HuangYou');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300&family=Noto+Serif+KR:wght@300&display=swap');
+* {
+	margin:0;
+	padding:0;
+	color:#000;
+	
+	box-sizing: border-box;
+}
+
+li {
+	font-family: 'Noto Serif KR', serif;
+}
+
+h2 {
+	font-family: 'Noto Sans', sans-serif;
+}
+
+ul {
+	list-style: none;
+}
+
+a {
+	text-decoration: none;
+	outline: none;
+	color : gray;
+}
+.container {
+	width:1440px;
+	margin:0 auto;
+}
+header {
+	width:100%;
+	height:80px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+header > h2 {
+	margin-left:10px;
+}
+
+header > nav {
+	width:400px;
+	height:100%;
+}
+
+header ul {
+	width:100%;
+	height: 100%;
+	display: flex;
+	justify-content: space-between;
+}
+
+header ul > li {
+	font-size:15px;
+	height: 100%;
+	display: flex;
+	align-items: center;
+}
+body {
+	font-family: 'Noto Serif KR', serif;
+}
+</style>
+
+<body>
+	<script src="http://code.jquery.com/jquery-2.2.3.min.js"> </script>
+	<div class="container">
+		<header>
+			<h2>THE HYUNDAI</h2>
+			<h2 th:text="${#authentication.principal}"></h2>
+			<nav>
+				<ul>
+					<li sec:authorize="!isAuthenticated()">
+						<a href="/member/login">로그인</a>
+					</li>
+					<li sec:authorize="hasRole('ROLE_USER')">
+						<div th:text="|${#authentication.principal.name} 님 환영합니다 :)|"></div>
+						<div style="padding:20px"/>
+						<a href="/logout">로그아웃</a>
+					</li>		
+				</ul>
+			</nav>
+		</header>
+	</div>
+	<div style="text-align:center; width:600px; margin-left:450px; margin-top:50px">
+		<form method="post">
+			<h5 style="text-align:center; margin-bottom:20px">게시물 리스트</h5>
+		<table class="table" style="text-align:center;">
+			<tr>
+				<th style="width:100px;">번호</th>
+				<th style="width:100px;">제목</th>
+				<th style="width:100px;">이름</th>
+				<th style="width:100px;">날짜</th>
+				<th style="width:100px;">조회수</th>
+			</tr>
+
+			<tr th:if="${not #lists.isEmpty(list)}" th:each="dto: ${list}">
+				<td th:text="${dto.no}" />
+				<td><a th:href="@{/detail(no=${dto.no})}" th:text="${dto.title}"
+						style="text-decoration:none; color:black" /></td>
+				<td th:text="${dto.name}" />
+				<td th:text="${#calendars.format(dto.regdate, 'yyyy-MM-dd')}" />
+				<td th:text="${dto.readcount}" />
+			</tr>
+			<tr>
+			</tr>
+
+		</table><br />
+
+		<div>
+			<div id="pagination">
+				<input type="hidden" th:value="${pageMaker.prev}" id="pageMakerPrev" />
+				<input type="hidden" th:value="${pageMaker.startPage}" id="pageMakerStartPage" />
+				<input type="hidden" th:value="${pageMaker.endPage}" id="pageMakerEndPage" />
+				<input type="hidden" th:value="${pageMaker.next}" id="pageMakerNext" />
+			</div>
+			<a sec:authorize="hasRole('ROLE_USER')">
+				<input type="button" class="btn btn-outline-dark" th:onclick="'location.href=\''+insert+'\''" th:value="글쓰기"
+					style="float:left" />
+			</a>
+		</div>
+		<form id="actionForm" action="/list" method="get">
+			<input type="hidden" name="pageNum" th:value="${pageMaker.cri.pageNum}">
+			<input type="hidden" name="amount" th:value="${pageMaker.cri.amount}">
+		</form>
+
+
+	</div>
+	<script>
+	// 페이징
+		var prev = $("#pageMakerPrev").val();
+		var startPage = $("#pageMakerStartPage").val();
+		var endPage = $("#pageMakerEndPage").val();
+		var next = $("#pageMakerNext").val();
+		console.log(prev, startPage, endPage, next);
+		var str = "<div class='paginate_button' style='list-style:none;'>";
+		for (var i = startPage; i <= endPage; i++) {
+			str += "<a href='/list?pageNum=" + i + "&amount=10' style='text-decoration:none'>&nbsp;&nbsp;" + i + "</a>";
+		}
+		str += "</div><br>";
+		$("#pagination").html(str);
+	</script>
+</body>
+
+</html>

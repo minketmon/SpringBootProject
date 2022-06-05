@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<!-- 
+/**
+ * @fileName		: signup.html
+ * @author			: 정예성
+ * @description		: 회원가입 페이지
+**/
+ -->  
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+<script type="text/javascript">
+$(document).ready(function(){
+	
+	// 이메일 입력창 내용 바뀌면 설정 초기화(정예성) 
+	$("#email").change(function(){
+        $("#emailCheck").val('N'); 
+    });  
+});
+	// 이메일 중복체크(정예성)
+	function fn_emailChk() {
+		var object = {"email" : $("#email").val()} // email 값 받아와서
+		var json = JSON.stringify(object); // object를 json 형태로 변경
+		$.ajax({
+			url: "/member/emailChk",
+			type : "POST",
+			dataType : "JSON",
+			data : json,
+			contentType : "application/json",
+			success : function (data) {
+				// data의 개수가 1이면 
+				if(data.count == 1) {
+					alert("중복된 이메일입니다.");
+				  // data의 개수가 0이면
+				} else if(data.count == 0){
+					$("#emailCheck").attr("value", "Y");
+					alert("사용 가능한 이메일입니다.");
+				}
+			}
+		})
+	}
+	
+	// 빈 칸 유효성 검사(정예성)
+	function checkField(){
+		if($("#email").val()==""){
+			alert("이메일을 입력하세요.");
+			$("#email").focus();
+			return;
+		}
+		
+		if($("#name").val()==""){
+			alert("이름을 입력하세요.");
+			$("#name").focus();
+			return;
+		}
+		
+		if($("#password").val()==""){
+			alert("비밀번호를 입력하세요.");
+			$("#password").focus();
+			return;
+		}
+		
+		if($("#emailCheck").val()=="N"){
+			alert("이메일 중복 검사를 진행해주세요.");
+			return;
+		}
+		
+		$("#memberJoinForm").submit();
+		
+		alert("가입이 완료되었습니다!");
+	}
+</script>
+<form id="memberJoinForm" method="post" action="/member/signup">
+    <div class="container">
+        <h1>회원가입</h1>
+        <div class="form-group">
+            <label for="email">userEmail</label>
+            <input type="text" class="form-control" id="email" name="email" placeholder="사용자 이메일">
+            <div style="padding-top:5px"></div>
+            <button type="button" class="btn add_s" id="emailCheck" value="N" onclick="fn_emailChk();">중복확인</button>       
+        </div>
+        <div class="form-group">
+            <label for="name">userName</label>
+            <input type="text" class="form-control" id="name" name="name" placeholder="사용자 이름">
+        </div>
+        <div class="form-group">
+            <label for="password">password</label>
+            <input type="password" class="form-control" id="password" name="password" placeholder="사용자 비밀번호">
+        </div>
+        <button type="button" class="btn btn-primary" id="joinBtn" onclick="checkField();">가입 완료</button>
+    </div>
+</form>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 
+/**
+ * @packageName		: src.main.resources.mapper
+ * @fileName		: ClubMemberDAO 
+ * @author			: 정예성 
+ * @description		: 회원가입, 이메일 중복체크, 로그인을 위한 SQL 정의 
+**/
+ -->
+<mapper namespace="com.hyundai.project.dao.ClubMemberDAO">
+
+<!-- 회원가입 -->
+<insert id="insertClubMember">
+INSERT INTO CLUB_MEMBER
+	(EMAIL, FROM_SOCIAL, NAME, PASSWORD, ROLE_SET)
+VALUES(#{email}, #{from_social}, #{name}, #{password}, #{role_set})
+</insert>
+
+<!-- 이메일 중복 체크 -->
+<select id="emailChk" resultType= "int">
+SELECT COUNT(EMAIL)
+FROM   CLUB_MEMBER
+WHERE  EMAIL = #{email}
+</select>
+
+<!-- 로그인 -->
+<select id="findByEmail" resultType="com.hyundai.project.dto.ClubMemberDTO">
+SELECT EMAIL
+ 	   , MODDATE
+ 	   , REGDATE
+ 	   , FROM_SOCIAL
+ 	   , NAME
+ 	   , PASSWORD
+ 	   , ROLE_SET
+FROM   CLUB_MEMBER 
+WHERE  EMAIL = #{email}
+</select>
+</mapper>
